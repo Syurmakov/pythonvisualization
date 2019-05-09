@@ -1,104 +1,35 @@
-# Byte-compiled / optimized / DLL files
-__pycache__/
-*.py[cod]
-*$py.class
+import numpy as np
+import pandas as pd 
+import matplotlib.pyplot as plt
 
-# C extensions
-*.so
+years = np.arange(1880, 2011, 3)
+datalist = 'https://raw.githubusercontent.com/wesm/pydata-book/2nd-edition/datasets/babynames/yob{year}.txt'
+dataframes = []
+for year in years:
+    dataset = datalist.format(year=year)
+    dataframe = pd.read_csv(dataset, names=['name', 'sex', 'count'])
+    dataframes.append(dataframe.assign(year=year))
 
-# Distribution / packaging
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
+result = pd.concat(dataframes)
+sex = result.groupby('sex')
+births_men = sex.get_group('M').groupby('year', as_index=False)
+births_women = sex.get_group('F').groupby('year', as_index=False)
+births_men_list = births_men.aggregate(np.sum)['count'].tolist()
+births_women_list = births_women.aggregate(np.sum)['count'].tolist()
 
-# PyInstaller
-#  Usually these files are written by a python script from a template
-#  before PyInstaller builds the exe, so as to inject date/other infos into it.
-*.manifest
-*.spec
+fig, ax = plt.subplots()
+fig.set_size_inches(25,15)
 
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
+index = np.arange(len(years))
+stolb1 = ax.bar(index, births_men_list, 0.4, color='c', label='Мужчины')
+stolb2 = ax.bar(index + 0.4, births_women_list, 0.4, alpha=0.8, color='r', label='Женщины')
 
-# Unit test / coverage reports
-htmlcov/
-.tox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-.hypothesis/
-.pytest_cache/
+ax.set_title('Рождаемость по полу и годам')
+ax.set_xlabel('Года')
+ax.set_ylabel('Рождаемость')
+ax.set_xticklabels(years)
+ax.set_xticks(index + 0.4)
+ax.legend(loc=9)
 
-# Translations
-*.mo
-*.pot
-
-# Django stuff:
-*.log
-local_settings.py
-db.sqlite3
-
-# Flask stuff:
-instance/
-.webassets-cache
-
-# Scrapy stuff:
-.scrapy
-
-# Sphinx documentation
-docs/_build/
-
-# PyBuilder
-target/
-
-# Jupyter Notebook
-.ipynb_checkpoints
-
-# pyenv
-.python-version
-
-# celery beat schedule file
-celerybeat-schedule
-
-# SageMath parsed files
-*.sage.py
-
-# Environments
-.env
-.venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
-
-# Spyder project settings
-.spyderproject
-.spyproject
-
-# Rope project settings
-.ropeproject
-
-# mkdocs documentation
-/site
-
-# mypy
-.mypy_cache/
+fig.tight_layout()
+plt.show()
